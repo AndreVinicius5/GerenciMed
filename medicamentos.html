@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estoque de Medicamentos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #header {
+            background-color: #283C5A;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #header h1 {
+            margin: 0;
+        }
+        #user-actions {
+            display: flex;
+            align-items: center;
+        }
+        #user-actions button {
+            position: relative;
+            margin-left: 20px;
+            font-size: 16px;
+            background-color: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        #user-actions button:hover {
+            text-decoration: underline;
+        }
+        #main-content {
+            padding: 20px;
+        }
+        #filters {
+            margin-bottom: 20px;
+        }
+        #filters input[type="text"],
+        #filters input[type="date"],
+        #filters select {
+            margin-top: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 40px;
+            font-size: 16px;
+        }
+        #medicamentos-list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .medicamento {
+            width: calc(20% - 20px);
+            margin: 5px;
+            padding: 5px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            font-size: 20px;
+        }
+        .medicamento:hover {
+            filter: brightness(70%);
+        }
+        .medicamento h3 {
+            margin-top: 0;
+        }
+        .prox-vencer {
+            background-color: yellow;
+        }
+        .vencido {
+            background-color: red;
+            color: #fff;
+        }
+
+        @media only screen and (max-width: 600px) {
+    #header {
+        flex-direction: column;
+        align-items: center;
+    }
+    #user-actions {
+        margin-top: 5px;
+    }
+    #user-actions button {
+        margin-left: 0;
+        margin-right: 5px;
+    }
+    #main-content {
+        padding: 0px;
+    }
+    #filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #filters input[type="text"],
+    #filters input[type="date"],
+    #filters select {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    #medicamentos-list {
+        display: block;
+    }
+    .medicamento {
+        width: 90%;
+        margin: 13px;
+        font-size: 15px;
+    }
+    #medicamentos-list .medicamento:last-child {
+        margin-bottom: 0;
+    }
+}
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Estoque de Medicamentos</h1>
+        <div id="user-actions">
+            <button onclick="goToPage('inicial')">Início</button>
+            <button onclick="goToPage('estoque')">Estoque</button>
+            <button onclick="goToPage('perfil')">Perfil</button>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </div>
+    <div id="main-content">
+        <div id="filters">
+            <input type="text" id="nomeFilter" placeholder="Nome do medicamento">
+            <input type="text" id="loteFilter" placeholder="Lote">
+            <input type="date" id="validadeFilter">
+            <select id="userFilter">
+                <option value="">Filtrar por usuário</option>
+            </select>
+            <button onclick="filtrar()">Filtrar</button>
+        </div>
+        <div id="medicamentos-list"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+    apiKey: "AIzaSyCn8bGNLi13GRlFTprad8ZPlnrJUbAi9aM",
+    authDomain: "medic-a6499.firebaseapp.com",
+    databaseURL: "https://medic-a6499-default-rtdb.firebaseio.com",
+    projectId: "medic-a6499",
+    storageBucket: "medic-a6499.appspot.com",
+    messagingSenderId: "844688062217",
+    appId: "1:844688062217:web:fe01d072f7a5a9c5fc45d8",
+    measurementId: "G-VWX3J8MWGT"
+  };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function logout() {
+            firebase.auth().signOut()
+                .then(() => {
+                    window.location.href = '/index.html';
+                })
+                .catch((error) => {
+                    console.error('Erro ao fazer logout:', error);
+                    alert('Erro ao fazer logout.');
+                });
+        }
+
+        function goToPage(page) {
+            if (page === 'inicial') {
+                window.location.href = '/inicial.html';
+            } else if (page === 'perfil') {
+                window.location.href = 'perfil.html';
+            } else if (page === 'estoque') {
+                window.location.href = '/estoque.html';
+            }
+        }
+
+        function listarUsuarios() {
+            const userFilter = document.getElementById('userFilter');
+
+            db.collection("usuarios")
+                .get()
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        const usuario = doc.data();
+                        const option = document.createElement('option');
+                        option.value = usuario.nome;
+                        option.textContent = usuario.nome;
+                        userFilter.appendChild(option);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Erro ao listar usuários:", error);
+                });
+        }
+
+        function listarMedicamentos() {
+            const medicamentosList = document.getElementById('medicamentos-list');
+
+            db.collection("medicamentos")
+                .get()
+                .then((querySnapshot) => {
+                    medicamentosList.innerHTML = '';
+                    querySnapshot.forEach((doc) => {
+                        const medicamento = doc.data();
+                        const dataValidade = new Date(medicamento.validade);
+                        const hoje = new Date();
+                        const diffTime = dataValidade - hoje;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        const div = document.createElement('div');
+                        div.classList.add('medicamento');
+                        div.innerHTML = `
+                            <h3>${medicamento.nome}</h3>
+                            <p>Lote: ${medicamento.lote}</p>
+                            <p>Quantidade: ${medicamento.quantidade}</p>
+                            <p>Validade: ${medicamento.validade}</p>
+                            <p>Dosagem: ${medicamento.dosagem}</p>
+                            <p>Data de Cadastro: ${medicamento.dataCadastro}</p>
+                            <p>Cadastrado por: ${medicamento.cadastradoPor}</p>
+                        `;
+                        if (diffDays <= 30 && diffDays > 0) {
+                            div.classList.add('prox-vencer');
+                        } else if (diffDays <= 0) {
+                            div.classList.add('vencido');
+                        }
+                        medicamentosList.appendChild(div);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Erro ao listar medicamentos:", error);
+                });
+        }
+
+        function filtrar() {
+            const nome = document.getElementById('nomeFilter').value;
+            const lote = document.getElementById('loteFilter').value;
+            const validade = document.getElementById('validadeFilter').value;
+            const usuario = document.getElementById('userFilter').value;
+
+            let query = db.collection("medicamentos");
+
+            if (nome) {
+                query = query.where("nome", "==", nome);
+            }
+            if (lote) {
+                query = query.where("lote", "==", lote);
+            }
+            if (validade) {
+                query = query.where("validade", "==", validade);
+            }
+            if (usuario) {
+                query = query.where("cadastradoPor", "==", usuario);
+            }
+
+            query.get()
+                .then((querySnapshot) => {
+                    const medicamentosList = document.getElementById('medicamentos-list');
+                    medicamentosList.innerHTML = '';
+                    querySnapshot.forEach((doc) => {
+                        const medicamento = doc.data();
+                        const dataValidade = new Date(medicamento.validade);
+                        const hoje = new Date();
+                        const diffTime = dataValidade - hoje;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        const div = document.createElement('div');
+                        div.classList.add('medicamento');
+                        div.innerHTML = `
+                            <h3>${medicamento.nome}</h3>
+                            <p>Lote: ${medicamento.lote}</p>
+                            <p>Quantidade: ${medicamento.quantidade}</p>
+                            <p>Validade: ${medicamento.validade}</p>
+                            <p>Dosagem: ${medicamento.dosagem}</p>
+                            <p>Data de Cadastro: ${medicamento.dataCadastro}</p>
+                            <p>Cadastrado por: ${medicamento.cadastradoPor}</p>
+                        `;
+                        if (diffDays <= 30 && diffDays > 0) {
+                            div.classList.add('prox-vencer');
+                        } else if (diffDays <= 0) {
+                            div.classList.add('vencido');
+                        }
+                        medicamentosList.appendChild(div);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Erro ao filtrar medicamentos:", error);
+                });
+        }
+
+        window.onload = function() {
+            listarUsuarios();
+            listarMedicamentos();
+        };
+    </script>
+</body>
+</html>

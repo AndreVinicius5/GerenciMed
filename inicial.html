@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub - Página Inicial</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #header {
+            background-color: #283C5A;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        #header h1 {
+            margin: 0;
+        }
+
+       
+        #user-actions {
+            display: flex;
+            align-items: center;
+        }
+        #user-actions button {
+            font-size: 20px;
+            background-color: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        #user-actions button:hover {
+            text-decoration: underline;
+        }
+        #user-info {
+            position: relative;
+            margin: 20px ;
+            text-align: left;
+            left: 30px;
+            font-size: 40px;
+        }
+        #datetime {
+            font-size: 35px;
+        }
+        #main-content {
+            padding: 20px;
+        }
+        #options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+          
+        }
+        .option-container {
+            position: relative;
+            margin: 10px;
+            width: 30%;
+            
+        }
+        .option-text {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            padding: 5px;
+            color: white;
+            font-weight: bold;
+            text-align: left;
+           font-size: 50px;
+        }
+        .option {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .option:hover {
+            filter: brightness(85%);
+        
+        }
+        .option-text{
+            z-index: 1;
+        }
+
+        @media screen and (max-width: 768px) {
+            #options {
+                flex-direction: column;
+                align-items: center;
+            }
+            .option-container {
+                width: 80%;
+            }
+            .option-text {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            padding: 5px;
+            color: white;
+            font-weight: bold;
+            text-align: left;
+            font-size: 25px;
+        }
+        header img{
+            width: 55%;
+        }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <img src="logoHospital.png">
+        <div id="user-actions">
+            <button onclick="goToProfile()">Perfil</button>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </div>
+    <div id="user-info">
+        <p id="greeting"></p>
+        <p id="datetime"></p>
+    </div>
+    <div id="main-content">
+        <div id="options">
+            <div class="option-container">
+                <div class="option-text">Medicamentos</div>
+                <img src="imagemLogin.png" class="option" onclick="goToPage('medicamentos')" alt="Medicamentos">
+            </div>
+            <div class="option-container">
+                <div class="option-text">Estoque</div>
+                <img src="estoque.png" class="option" onclick="goToPage('estoque')" alt="Estoque">
+            </div>
+            <div class="option-container">
+                <div class="option-text">Bulário</div>
+                <img src="bula.png" class="option" onclick="goToPage('bulario')" alt="Bulário">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Configurações do Firebase
+        const firebaseConfig = {
+    apiKey: "AIzaSyCn8bGNLi13GRlFTprad8ZPlnrJUbAi9aM",
+    authDomain: "medic-a6499.firebaseapp.com",
+    databaseURL: "https://medic-a6499-default-rtdb.firebaseio.com",
+    projectId: "medic-a6499",
+    storageBucket: "medic-a6499.appspot.com",
+    messagingSenderId: "844688062217",
+    appId: "1:844688062217:web:fe01d072f7a5a9c5fc45d8",
+    measurementId: "G-VWX3J8MWGT"
+  }
+
+        // Inicialização do Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Função para determinar a saudação com base na hora do dia
+        function getGreeting(username) {
+            const date = new Date();
+            const hour = date.getHours();
+            let greeting = "";
+
+            if (hour >= 5 && hour < 12) {
+                greeting = "Bom dia";
+            } else if (hour >= 12 && hour < 18) {
+                greeting = "Boa tarde";
+            } else {
+                greeting = "Boa noite";
+            }
+
+            return `${greeting}, ${username}`;
+        }
+
+        // Função para exibir a hora atual, data e dia da semana
+        function showDateTime() {
+            const date = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = date.toLocaleDateString('pt-BR', options);
+            const timeString = date.toLocaleTimeString('pt-BR');
+            document.getElementById('datetime').innerText = `${formattedDate} - ${timeString}`;
+        }
+
+        // Função para redirecionar para a página de perfil do usuário
+        function goToProfile() {
+            // Redireciona para a página de perfil do usuário
+            window.location.href = 'perfil.html';
+        }
+
+        // Função para fazer logout
+        function logout() {
+            // Redireciona para a página de login
+            window.location.href = '/index.html';
+        }
+        
+        // Função para redirecionar para uma página específica
+        function goToPage(page) {
+            // Implemente o redirecionamento para a página específica aqui
+            if (page === 'estoque') {
+                window.location.href = '/estoque.html';
+            } 
+            if (page === 'medicamentos') {
+                window.location.href = '/medicamentos.html';
+            } else {
+                alert(`Redirecionar para a página: ${page}`);
+            }
+        }
+
+        // Inicialização da página
+        window.onload = function() {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    const email = user.email;
+                    db.collection("usuarios").where("email", "==", email)
+                    .get()
+                    .then((querySnapshot) => {
+                        querySnapshot.forEach((doc) => {
+                            const username = doc.data().nome;
+                            document.getElementById('greeting').innerText = getGreeting(username);
+                        });
+                    })
+                    .catch((error) => {
+                        console.log("Erro ao buscar o nome do usuário:", error);
+                    });
+                } else {
+                    document.getElementById('greeting').innerText = "Bem-vindo";
+                }
+            });
+            showDateTime();
+        };
+    </script>
+</body>
+</html>

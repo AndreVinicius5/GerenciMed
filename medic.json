@@ -1,0 +1,18 @@
+{
+  "medicamentos": {
+    "ID_único_1": {
+      "nome": "Nome do Medicamento 1",
+      "data_lote": "01/04/2024",
+      "data_vencimento": "01/04/2025"
+    },
+    "ID_único_2": {
+      "nome": "Nome do Medicamento 2",
+      "data_lote": "02/04/2024",
+      "data_vencimento": "02/04/2025"
+    },
+    "ID_único_3": {
+      "nome": "Nome do Medicamento 3",
+      "data_lote": "03/04/2024",
+      "data_vencimento": "03/04/2025"
+    }
+  

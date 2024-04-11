@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+</head>
+<body>
+    <div id="logotop" class="logohosp">
+        <div class="barratop">
+            <img src="/logoHospital.png" alt="Logo ALVF">
+        </div>
+        <div class="background">
+            <img class="background" src="/background login.jpg" alt="Placeholder">
+        </div>
+    </div>
+
+    <!-- Mensagem sobre cookies -->
+    <div id="cookieMessage" style="display: none; background-color: #f8d7da; color: #721c24; padding: 10px;">
+        <strong>Aviso:</strong> Esta página usa cookies para melhorar sua experiência. Por favor, aceite os cookies para continuar.
+        <button onclick="acceptCookies()">Aceitar cookies</button>
+    </div>
+
+    <form id="loginForm">
+        <h2>Bem-Vindo(a)</h2>
+        <label for="email"></label>
+        <input type="email" id="email" name="email" placeholder="Email" required>
+        <label for="password" style="display: none;">Senha:</label> <!-- Label oculta -->
+        <input type="password" id="password" name="password" placeholder="Senha" required>
+        <input type="submit" value="Login">
+        <div class="signup-link">
+            <a href="//cadastro.html" onclick="showSignUpForm()">Cadastre-se</a>
+        </div>
+        <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+        <script>
+          const firebaseConfig = {
+    apiKey: "AIzaSyCn8bGNLi13GRlFTprad8ZPlnrJUbAi9aM",
+    authDomain: "medic-a6499.firebaseapp.com",
+    databaseURL: "https://medic-a6499-default-rtdb.firebaseio.com",
+    projectId: "medic-a6499",
+    storageBucket: "medic-a6499.appspot.com",
+    messagingSenderId: "844688062217",
+    appId: "1:844688062217:web:fe01d072f7a5a9c5fc45d8",
+    measurementId: "G-VWX3J8MWGT"
+  };
+            firebase.initializeApp(firebaseConfig);
+
+            // Função para aceitar cookies
+            function acceptCookies() {
+                document.cookie = "cookiesAccepted=true; SameSite=None; Secure";
+                document.getElementById('cookieMessage').style.display = 'none';
+            }
+
+            // Verificar se os cookies foram aceitos
+            if (document.cookie.indexOf("cookiesAccepted=true") === -1) {
+                document.getElementById('cookieMessage').style.display = 'block';
+            }
+
+            const loginForm = document.getElementById('loginForm');
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                firebase.auth().signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        // Login com sucesso
+                        const user = userCredential.user;
+                        console.log('Login bem-sucedido: ', user);
+                        window.location.href = "//inicial.html";
+                    })
+                    .catch((error) => {
+                        console.error('Erro ao fazer login:', error);
+                        alert('Erro ao fazer login. Por favor, verifique suas credenciais e tente novamente.');
+                    });
+            });
+        </script>
+    </form>
+</body>
+</html>

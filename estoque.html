@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro e Consulta de Medicamentos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+     
+        
+        #inventory {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 40px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="number"],
+        input[type="date"] {
+            width: calc(100% - 10px);
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 40px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        button.remove-btn {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+        button.remove-btn:hover {
+            background-color: #c82333;
+        }
+        .medicamento-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 40px;
+            margin-bottom: 10px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .medicamento-item p {
+            margin: 5px 0;
+        }
+        .pesquisa {
+            margin-bottom: 20px;
+        }
+        .pesquisa input[type="text"] {
+            width: calc(100% - 10px);
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 40px;
+            font-size: 16px;
+        }
+        #user-actions {
+            display: flex;
+            align-items: center;
+        }
+        #user-actions button {
+            font-size: 20px;
+            background-color: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        #user-actions button:hover {
+            text-decoration: underline;
+        }
+        #header {
+            background-color: #283C5A;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        @media only screen and (max-width: 600px) {
+    #header {
+        flex-direction: column;
+        align-items: center;
+    }
+    }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <img src="logoHospital.png">
+        <div id="user-actions">
+            <button onclick="goToPage('inicial')">Início</button>
+            <button onclick="goToPage('estoque')">Estoque</button>
+            <button onclick="goToPage('perfil')">Perfil</button>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </div>
+    <!-- Medication Inventory -->
+    <div id="inventory" style="display: none;">
+        <h1>Cadastro e Consulta de Medicamentos</h1>
+
+        <h2>Cadastrar Medicamento</h2>
+        <label for="nomeInput">Nome </label>
+        <input type="text" id="nomeInput" required><br>
+        <label for="loteInput">Lote</label>
+        <input type="text" id="loteInput" required><br>
+        <label for="quantidadeInput">Quantidade</label>
+        <input type="number" id="quantidadeInput" required><br>
+        <label for="validadeInput">Validade</label>
+        <input type="date" id="validadeInput" required><br>
+        <label for="dosagemInput">Dosagem</label>
+        <input type="text" id="dosagemInput" required><br>
+        <button onclick="cadastrarMedicamento()">Cadastrar</button>
+
+        <h2>Pesquisar Medicamento por Nome ou Lote</h2>
+        <div class="pesquisa">
+            <label for="pesquisaInput">Pesquisar:</label>
+            <input type="text" id="pesquisaInput" oninput="pesquisarMedicamento()">
+        </div>
+
+        <h2>Medicamentos Cadastrados</h2>
+        <div id="listaMedicamentos"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Função para sair da sessão
+        function logout() {
+            firebase.auth().signOut()
+                .then(() => {
+                    window.location.href = '/index.html';
+                })
+                .catch((error) => {
+                    console.error('Erro ao fazer logout:', error);
+                    alert('Erro ao fazer logout.');
+                });
+        }
+
+        const firebaseConfig = {
+    apiKey: "AIzaSyCn8bGNLi13GRlFTprad8ZPlnrJUbAi9aM",
+    authDomain: "medic-a6499.firebaseapp.com",
+    databaseURL: "https://medic-a6499-default-rtdb.firebaseio.com",
+    projectId: "medic-a6499",
+    storageBucket: "medic-a6499.appspot.com",
+    messagingSenderId: "844688062217",
+    appId: "1:844688062217:web:fe01d072f7a5a9c5fc45d8",
+    measurementId: "G-VWX3J8MWGT"
+  };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Verificar se o usuário está autenticado
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                // O usuário está autenticado, exibe o conteúdo da página
+                document.getElementById('inventory').style.display = 'block';
+                // Exibe os medicamentos cadastrados ao carregar a página
+                listarMedicamentos();
+            } else {
+                // O usuário não está autenticado, redireciona para a página de login
+                // window.location.href = '/index.html';
+            }
+        });
+
+        // Função para cadastrar um novo medicamento
+        function cadastrarMedicamento() {
+            const nome = document.getElementById('nomeInput').value;
+            const lote = document.getElementById('loteInput').value;
+            const quantidade = parseInt(document.getElementById('quantidadeInput').value);
+            const validade = document.getElementById('validadeInput').value;
+            const dosagem = document.getElementById('dosagemInput').value;
+            const dataCadastro = new Date().toLocaleDateString('pt-BR');
+
+            if (nome && lote && quantidade && validade && dosagem) {
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    db.collection("usuarios").doc(user.uid).get().then(function(doc) {
+                        if (doc.exists) {
+                            const nomeUsuario = doc.data().nome;
+                            db.collection("medicamentos").add({
+                                nome: nome,
+                                lote: lote,
+                                quantidade: quantidade,
+                                validade: validade,
+                                dosagem: dosagem,
+                                dataCadastro: dataCadastro,
+                                cadastradoPor: nomeUsuario
+                            })
+                            .then((docRef) => {
+                                console.log("Medicamento cadastrado com ID:", docRef.id);
+                                alert("Medicamento cadastrado com sucesso!");
+                                limparCampos();
+                                listarMedicamentos();
+                            })
+                            .catch((error) => {
+                                console.error("Erro ao cadastrar medicamento:", error);
+                                alert("Erro ao cadastrar medicamento: " + error.message);
+                            });
+                        } else {
+                            console.log("Nome do usuário não encontrado.");
+                        }
+                    }).catch(function(error) {
+                        console.log("Erro ao buscar nome do usuário:", error);
+                    });
+                } else {
+                    console.log("Usuário não autenticado.");
+                }
+            } else {
+                alert('Por favor, preencha todos os campos.');
+            }
+        }
+
+        // Função para listar os medicamentos cadastrados
+        function listarMedicamentos() {
+            db.collection("medicamentos")
+            .get()
+            .then((querySnapshot) => {
+                const listaMedicamentos = document.getElementById('listaMedicamentos');
+                listaMedicamentos.innerHTML = '';
+
+                querySnapshot.forEach((doc) => {
+                    const medicamento = doc.data();
+                    const itemLista = document.createElement('div');
+                    itemLista.classList.add('medicamento-item');
+
+                    itemLista.innerHTML = `
+                        <p><strong>Nome:</strong> ${medicamento.nome}</p>
+                        <p><strong>Lote:</strong> ${medicamento.lote}</p>
+                        <p><strong>Quantidade:</strong> ${medicamento.quantidade}</p>
+                        <p><strong>Validade:</strong> ${medicamento.validade}</p>
+                        <p><strong>Dosagem:</strong> ${medicamento.dosagem}</p>
+                        <p><strong>Data de Cadastro:</strong> ${medicamento.dataCadastro}</p>
+                        <p><strong>Cadastrado por:</strong> ${medicamento.cadastradoPor || 'Desconhecido'}</p>
+                    `;
+
+                    // Adiciona botão de remover
+                    const botaoRemover = document.createElement('button');
+                    botaoRemover.textContent = 'Remover';
+                    botaoRemover.classList.add('remove-btn');
+                    botaoRemover.onclick = function() {
+                        removerMedicamento(doc.id, medicamento.nome);
+                    };
+                    itemLista.appendChild(botaoRemover);
+
+                    listaMedicamentos.appendChild(itemLista);
+                });
+            })
+            .catch((error) => {
+                console.error("Erro ao listar medicamentos:", error);
+                alert("Erro ao listar medicamentos: " + error.message);
+            });
+        }
+
+        function goToPage(page) {
+            if (page === 'inicial') {
+                window.location.href = '//inicial.html';
+            } else if (page === 'perfil') {
+                window.location.href = '/perfil.html';
+            } else if (page === 'estoque') {
+                window.location.href = '//estoque.html';
+            }
+         }
+
+        // Função para remover um medicamento pelo ID
+        function removerMedicamento(id, nome) {
+            const confirmacao = confirm(`Tem certeza que deseja remover o medicamento ${nome}?`);
+            if (confirmacao) {
+                db.collection("medicamentos").doc(id).delete()
+                .then(() => {
+                    console.log("Medicamento removido com sucesso!");
+                    alert("Medicamento removido com sucesso!");
+                    listarMedicamentos(); // Atualiza a lista após a remoção
+                })
+                .catch((error) => {
+                    console.error("Erro ao remover medicamento:", error);
+                    alert("Erro ao remover medicamento: " + error.message);
+                });
+            }
+        }
+
+        // Função para limpar os campos do formulário após o cadastro
+        function limparCampos() {
+            document.getElementById('nomeInput').value = '';
+            document.getElementById('loteInput').value = '';
+            document.getElementById('quantidadeInput').value = '';
+            document.getElementById('validadeInput').value = '';
+            document.getElementById('dosagemInput').value = '';
+        }
+
+        // Função para pesquisar medicamentos por nome ou lote
+        function pesquisarMedicamento() {
+            const pesquisaInput = document.getElementById('pesquisaInput').value.trim().toLowerCase();
+
+            if (pesquisaInput === '') {
+                listarMedicamentos();
+                return;
+            }
+
+            db.collection("medicamentos").where("nome", "==", pesquisaInput)
+            .get()
+            .then((querySnapshot) => {
+                const listaMedicamentos = document.getElementById('listaMedicamentos');
+                listaMedicamentos.innerHTML = '';
+
+                querySnapshot.forEach((doc) => {
+                    const medicamento = doc.data();
+                    const itemLista = document.createElement('div');
+                    itemLista.classList.add('medicamento-item');
+
+                    itemLista.innerHTML = `
+                        <p><strong>Nome:</strong> ${medicamento.nome}</p>
+                        <p><strong>Lote:</strong> ${medicamento.lote}</p>
+                        <p><strong>Quantidade:</strong> ${medicamento.quantidade}</p>
+                        <p><strong>Validade:</strong> ${medicamento.validade}</p>
+                        <p><strong>Dosagem:</strong> ${medicamento.dosagem}</p>
+                        <p><strong>Data de Cadastro:</strong> ${medicamento.dataCadastro}</p>
+                        <p><strong>Cadastrado por:</strong> ${medicamento.cadastradoPor || 'Desconhecido'}</p>
+                    `;
+
+                    // Adiciona botão de remover
+                    const botaoRemover = document.createElement('button');
+                    botaoRemover.textContent = 'Remover';
+                    botaoRemover.classList.add('remove-btn');
+                    botaoRemover.onclick = function() {
+                        removerMedicamento(doc.id, medicamento.nome);
+                    };
+                    itemLista.appendChild(botaoRemover);
+
+                    listaMedicamentos.appendChild(itemLista);
+                });
+            })
+            .catch((error) => {
+                console.error("Erro ao pesquisar medicamento:", error);
+                alert("Erro ao pesquisar medicamento: " + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

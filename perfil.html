@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Perfil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        #header {
+            background-color: #283C5A;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #header h1 {
+            margin: 0;
+        }
+
+        #user-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        #user-actions button {
+            margin-left: 20px;
+            font-size: 16px;
+            background-color: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #user-actions button:hover {
+            text-decoration: underline;
+        }
+
+        #main-content {
+            padding: 20px;
+        }
+
+        h1 {
+            color: #283C5A;
+        }
+
+        #profile-info {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        #profile-image-container {
+            margin-right: 20px;
+        }
+
+        #profile-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        #profile-details {
+            flex-grow: 1;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #283C5A;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1e2e42;
+        }
+
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <img src="logoHospital.png">    
+        <div id="user-actions">
+            <button onclick="goToPage('inicial')">Início</button>
+            <button onclick="goToPage('estoque')">Estoque</button>
+            <button onclick="goToPage('perfil')">Perfil</button>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </div>
+    <div id="main-content">
+        <h1>Gerenciar Perfil</h1>
+        <div id="profile-info">
+            <div id="profile-image-container">
+                <img id="profile-image" src="placeholder.jpg" alt="Foto de Perfil">
+                <input type="file" id="image-upload" accept="image/*" onchange="previewImage(event)">
+            </div>
+            <div id="profile-details">
+                <label for="name">Nome:</label>
+                <input type="text" id="name" value="" readonly>
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="" readonly>
+                <label for="cpf">CPF:</label>
+                <input type="text" id="cpf" value="" readonly>
+                <label for="password">Senha:</label>
+                <input type="password" id="password" value="******" readonly>
+                <button onclick="enableEdit()">Editar</button>
+                <button onclick="updateProfile()" style="display:none">Salvar Alterações</button>
+            </div>
+        </div>
+        <div id="change-password" style="display:none">
+            <h2>Alterar Senha</h2>
+            <input type="password" id="current-password" placeholder="Senha Atual">
+            <input type="password" id="new-password" placeholder="Nova Senha">
+            <input type="password" id="confirm-new-password" placeholder="Confirmar Nova Senha">
+            <button onclick="changePassword()">Alterar Senha</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Configurações do Firebase
+        const firebaseConfig = {
+    apiKey: "AIzaSyCn8bGNLi13GRlFTprad8ZPlnrJUbAi9aM",
+    authDomain: "medic-a6499.firebaseapp.com",
+    databaseURL: "https://medic-a6499-default-rtdb.firebaseio.com",
+    projectId: "medic-a6499",
+    storageBucket: "medic-a6499.appspot.com",
+    messagingSenderId: "844688062217",
+    appId: "1:844688062217:web:fe01d072f7a5a9c5fc45d8",
+    measurementId: "G-VWX3J8MWGT"
+  }
+
+        // Inicialização do Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Função para fazer logout
+        function logout() {
+            // Redireciona para a página de login
+            window.location.href = '/index.html';
+        }
+
+        // Função para habilitar edição dos campos
+        function enableEdit() {
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            nameInput.removeAttribute('readonly');
+            emailInput.removeAttribute('readonly');
+            document.getElementById('profile-details').querySelectorAll('button')[0].style.display = 'none';
+            document.getElementById('profile-details').querySelectorAll('button')[1].style.display = 'block';
+        }
+
+        // Função para atualizar o perfil do usuário
+        function updateProfile() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            db.collection("usuarios").doc(email).update({
+                nome: name
+            })
+            .then(() => {
+                alert("Perfil atualizado com sucesso!");
+                document.getElementById('name').setAttribute('readonly', 'true');
+                document.getElementById('email').setAttribute('readonly', 'true');
+                document.getElementById('profile-details').querySelectorAll('button')[0].style.display = 'block';
+                document.getElementById('profile-details').querySelectorAll('button')[1].style.display = 'none';
+            })
+            .catch((error) => {
+                console.error("Erro ao atualizar o perfil: ", error);
+            });
+        }
+
+        // Função para alterar a senha do usuário
+        function changePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+            // Implemente a lógica para alterar a senha do usuário no Firebase aqui
+        }
+
+        // Função para mostrar uma pré-visualização da imagem de perfil selecionada
+        function previewImage(event) {
+            const preview = document.getElementById('profile-image');
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onloadend = function() {
+                preview.src = reader.result;
+            }
+
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = "";
+            }
+        }
+
+        // Função para redirecionar para uma página específica
+        function goToPage(page) {
+            if (page === 'inicial') {
+                window.location.href = 'pagina/inicial.html';
+            } else if (page === 'estoque') {
+                window.location.href = '/estoque.html';
+            } else if (page === 'perfil') {
+                window.location.href = 'perfil.html';
+            }
+        }
+
+        // Função para preencher os dados do perfil do usuário
+        function fillProfileData(user) {
+            const email = user.email;
+            db.collection("usuarios").doc(email).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('name').value = data.nome;
+                    document.getElementById('email').value = email;
+                    document.getElementById('cpf').value = data.cpf;
+                } else {
+                    console.log("Nenhum documento encontrado!");
+                }
+            })
+            .catch((error) => {
+                console.log("Erro ao buscar os dados do usuário:", error);
+            });
+        }
+
+        // Inicialização da página
+        window.onload = function() {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    fillProfileData(user);
+                } else {
+                    // Usuário não está autenticado, redirecionar para a página de login
+                    window.location.href = '/index.html';
+                }
+            });
+        };
+    </script>
+</body>
+</html>
