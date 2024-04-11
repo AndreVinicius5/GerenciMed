@@ -163,7 +163,7 @@
         function logout() {
             firebase.auth().signOut()
                 .then(() => {
-                    window.location.href = '/index.html';
+                    window.location.href = 'https://andrevinicius5.github.io/GerenciMed/index.html';
                 })
                 .catch((error) => {
                     console.error('Erro ao fazer logout:', error);
@@ -173,11 +173,11 @@
 
         function goToPage(page) {
             if (page === 'inicial') {
-                window.location.href = '/inicial.html';
+                window.location.href = 'https://andrevinicius5.github.io/GerenciMed/inicial.html';
             } else if (page === 'perfil') {
-                window.location.href = 'perfil.html';
+                window.location.href = 'https://andrevinicius5.github.io/GerenciMed/perfil.html';
             } else if (page === 'estoque') {
-                window.location.href = '/estoque.html';
+                window.location.href = 'https://andrevinicius5.github.io/GerenciMed/estoque.html';
             }
         }
 
